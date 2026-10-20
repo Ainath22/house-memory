@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mystery Boxes: Where Is the Room?</title>
+<style>
+/* ===== ESTILOS ===== */
+:root{--ink:#3b2f63;--cream:#fff8e8;--sky:#d9f0ff;--lav:#e6dcff;--btn:#ff7a59;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:"Baloo 2","Fredoka","Trebuchet MS",ui-rounded,"Comic Sans MS",sans-serif;color:var(--ink);
+ background:linear-gradient(160deg,var(--cream) 0%,var(--sky) 55%,var(--lav) 100%);overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid #7a4dff;outline-offset:3px}
+.screen{display:none;min-height:100vh;padding:14px 18px;flex-direction:column;align-items:center}
+.screen.on{display:flex}
+.big{border:0;border-radius:999px;padding:16px 42px;font-size:clamp(22px,3vw,34px);font-weight:800;color:#fff;
+ background:var(--btn);box-shadow:0 8px 0 #c4482a,0 14px 22px #0003;transition:transform .15s}
+.big:hover{transform:translateY(-3px)} .big:active{transform:translateY(5px);box-shadow:0 3px 0 #c4482a}
+.big.green{background:#3cbf6b;box-shadow:0 8px 0 #278a4b,0 14px 22px #0003}
+.big.blue{background:#4a8dff;box-shadow:0 8px 0 #2d5fc4,0 14px 22px #0003}
+.small{border:0;border-radius:14px;padding:8px 14px;font-weight:700;background:#fff;box-shadow:0 3px 0 #0002}
+.spark{position:fixed;pointer-events:none;animation:float 6s ease-in-out infinite;opacity:.6;z-index:0}
+@keyframes float{50%{transform:translateY(-18px) rotate(20deg)}}
+/* inicio */
+#home{justify-content:center;text-align:center;gap:10px}
+#home h1{font-size:clamp(46px,9vw,110px);margin:0;letter-spacing:2px;color:#ff5a7a;text-shadow:0 5px 0 #fff,0 10px 0 #ffb3c2}
+#home h2{margin:0;font-size:clamp(20px,3vw,34px)}
+.bear{font-size:clamp(90px,16vw,170px);animation:bob 2s ease-in-out infinite;position:relative}
+.bubble{position:absolute;left:100%;top:0;background:#fff;border-radius:22px;padding:8px 16px;font-size:22px;white-space:nowrap;box-shadow:0 5px 0 #0002}
+@keyframes bob{50%{transform:translateY(-14px)}}
+.hint{background:#ffffffb0;border-radius:18px;padding:10px 22px;font-size:clamp(16px,2vw,24px);max-width:640px}
+/* barra */
+.top{width:min(980px,100%);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;z-index:2}
+.stats{display:flex;gap:10px;font-weight:700;font-size:18px}
+.stats span{background:#ffffffc0;border-radius:14px;padding:4px 12px}
+.tools{display:flex;gap:8px}
+/* pregunta */
+#qbox{min-height:110px;text-align:center;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#q{font-size:clamp(28px,5vw,58px);font-weight:800;margin:0}
+#q b{color:#fff;background:#7a4dff;border-radius:18px;padding:0 16px;box-shadow:0 5px 0 #4b2ab5}
+#q .spk{border:0;background:#fff;border-radius:50%;width:54px;height:54px;font-size:28px;box-shadow:0 4px 0 #0002;margin-left:8px}
+#msg{min-height:50px;font-size:clamp(24px,4vw,44px);font-weight:800;color:#ff5a7a;text-align:center;z-index:2;text-shadow:0 3px 0 #fff}
+#msg.pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+/* cajas */
+#grid{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);gap:clamp(10px,2vw,24px);width:min(860px,94vw);z-index:2;margin:6px 0 14px}
+.box{background:none;border:0;padding:0;aspect-ratio:1;position:relative}
+.bx{position:absolute;inset:0;animation:enter .6s backwards;animation-delay:calc(var(--i)*.09s);transition:transform .25s}
+@keyframes enter{from{transform:translateY(-120px) scale(.2) rotate(-30deg);opacity:0}}
+.box:hover:not(.open) .bx{transform:translateY(-8px) rotate(-2.5deg) scale(1.04)}
+.box:active .bx{transform:scale(.94)}
+.body{position:absolute;left:4%;right:4%;top:36%;bottom:2%;border-radius:12px 12px 22px 22px;z-index:1;
+ background:linear-gradient(180deg,var(--c),var(--c2));box-shadow:inset 0 -14px 0 #0002,inset 10px 0 0 #fff3,0 14px 18px #0003}
+.body:after,.lid:after{content:"";position:absolute;left:44%;width:12%;top:0;bottom:0;background:#ffffffc8}
+.lid{position:absolute;left:0;right:0;top:20%;height:22%;border-radius:16px;z-index:4;transform-origin:left bottom;transition:transform .5s cubic-bezier(.3,1.6,.5,1);
+ background:linear-gradient(180deg,var(--c),var(--c2));box-shadow:inset 0 -8px 0 #0002,inset 8px 0 0 #fff4,0 6px 8px #0003}
+.lid:before{content:"★";position:absolute;left:50%;top:-30%;transform:translateX(-50%);font-size:clamp(20px,3vw,34px);z-index:2;color:#fff;text-shadow:0 2px 0 #0003}
+.box.open .lid{transform:translate(-14%,-70%) rotate(-32deg)}
+.room{position:absolute;left:2%;right:2%;top:-6%;bottom:10%;z-index:1;border-radius:20px;background:#fff;border:6px solid #fff;overflow:hidden;
+ opacity:0;transform:translateY(55%) scale(.5);transition:all .6s cubic-bezier(.3,1.4,.5,1);box-shadow:0 0 0 5px gold,0 0 36px 10px #fff7a8}
+.box.open .room{opacity:1;transform:none;z-index:3}
+.room img{width:100%;height:100%;object-fit:cover;display:block}
+.room .lab{position:absolute;left:0;right:0;bottom:0;background:#000a;color:#fff;font-weight:800;font-size:clamp(16px,2.6vw,30px);text-align:center;padding:2px}
+.missing{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff3c4;font-size:clamp(36px,7vw,80px);text-align:center}
+.missing small{font-size:13px;padding:0 6px;color:#9a6b00}
+.box.shake .bx{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.box.party .bx{animation:dance .7s 2}
+@keyframes dance{50%{transform:scale(1.1) rotate(4deg)}}
+.box:disabled{cursor:default}
+#obs{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;z-index:2;margin-bottom:10px}
+#ready{display:none;text-align:center;z-index:2;animation:pop .5s}
+#ready h2{font-size:clamp(26px,4vw,46px);margin:0 0 10px}
+.star{position:fixed;z-index:50;pointer-events:none;font-size:30px;animation:burst 1.3s forwards}
+@keyframes burst{to{transform:translate(var(--x),var(--y)) rotate(360deg) scale(.3);opacity:0}}
+.conf{position:fixed;top:-20px;width:12px;height:18px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+/* victoria */
+#win{justify-content:center;text-align:center;gap:10px}
+#win h1{font-size:clamp(44px,8vw,96px);margin:0;color:#3cbf6b;text-shadow:0 5px 0 #fff}
+#sum{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:760px}
+#sum span{background:#fff;border-radius:14px;padding:4px 12px;font-weight:700;font-size:20px}
+/* panel maestra */
+dialog{border:0;border-radius:24px;padding:20px;width:min(780px,95vw);max-height:92vh;background:#fffdf6;color:var(--ink);box-shadow:0 20px 60px #0006}
+dialog::backdrop{background:#2b1b5a88}
+dialog h3{margin:0 0 8px;font-size:26px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #e6dcff}
+.row input[type=text]{flex:1;min-width:120px;font:inherit;padding:6px 10px;border-radius:10px;border:2px solid #c9b8ff}
+.row img{width:46px;height:46px;object-fit:cover;border-radius:8px;background:#eee}
+.opts{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;align-items:center}
+.opts label{font-weight:700}
+select{font:inherit;padding:4px 8px;border-radius:10px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#3b2f63;color:#fff;padding:10px 20px;border-radius:16px;z-index:99;display:none;max-width:90vw;font-size:18px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<span class="spark" style="left:6%;top:12%;font-size:34px">✨</span><span class="spark" style="right:8%;top:20%;font-size:28px;animation-delay:1s">⭐</span>
+<span class="spark" style="left:12%;bottom:14%;font-size:30px;animation-delay:2s">⭐</span><span class="spark" style="right:14%;bottom:10%;font-size:36px;animation-delay:3s">✨</span>
+
+<!-- ===== INICIO ===== -->
+<section id="home" class="screen on">
+  <div class="bear">🐻<span class="bubble">Hi! Let's explore!</span></div>
+  <h1>MYSTERY BOXES!</h1>
+  <h2>Can you remember where each room is?</h2>
+  <p class="hint">👀 Look carefully, remember the rooms, and find the right box!</p>
+  <button class="big" id="playBtn">LET'S PLAY!</button>
+  <button class="small" id="teacherHome">⚙ TEACHER SETTINGS</button>
+</section>
+
+<!-- ===== JUEGO ===== -->
+<section id="game" class="screen">
+  <div class="top">
+    <div class="stats"><span>🎚 Level: <b id="sLevel">3</b></span><span>⭐ Score: <b id="sScore">0</b></span><span>🏠 Rooms found: <b id="sFound">0</b></span><span>❓ Questions remaining: <b id="sLeft">0</b></span></div>
+    <div class="tools">
+      <button class="small" id="soundBtn" aria-label="Sound on/off">🔊</button>
+      <button class="small" id="teacherBtn">⚙ TEACHER SETTINGS</button>
+      <button class="small" id="homeBtn">🏠 HOME</button>
+    </div>
+  </div>
+  <div id="qbox"><p id="q">LOOK CAREFULLY!</p></div>
+  <div id="msg"></div>
+  <div id="grid"></div>
+  <div id="obs">
+    <button class="big blue" id="showAll">SHOW ALL ROOMS</button>
+    <button class="big small" id="skipObs" style="display:none"></button>
+  </div>
+  <div id="ready"><h2>READY TO TEST YOUR MEMORY?</h2><button class="big green" id="readyBtn">LET'S FIND THE ROOMS!</button></div>
+  <button class="big green" id="nextBtn" style="display:none">NEXT ROOM</button>
+</section>
+
+<!-- ===== VICTORIA ===== -->
+<section id="win" class="screen">
+  <div class="bear">🐻🎉</div>
+  <h1>YOU DID IT!</h1>
+  <h2>Total score: <span id="wScore">0</span></h2>
+  <div id="sum"></div>
+  <h3 id="wLevel"></h3>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+    <button class="big blue" id="nextLvlBtn">NEXT LEVEL</button>
+    <button class="big green" id="againBtn">PLAY AGAIN</button>
+    <button class="big blue" id="backBtn">BACK TO HOME</button>
+  </div>
+</section>
+
+<!-- ===== PANEL DE LA MAESTRA ===== -->
+<dialog id="panel">
+  <h3>⚙ Panel de la maestra</h3>
+  <div id="rooms"></div>
+  <button class="small" id="addRoom">➕ Agregar habitación</button>
+  <div class="opts">
+    <label>Nivel (cajas): <select id="oBoxes"></select></label>
+    <label>Tiempo de observación: <select id="oObs"><option>3</option><option>5</option><option>8</option><option>10</option></select> s</label>
+    <label><input type="checkbox" id="oSound"> Sonidos</label>
+    <label><input type="checkbox" id="oSpeak"> Pronunciación automática</label>
+  </div>
+  <div class="opts">
+    <button class="small" id="pRestart">🔄 Reiniciar partida</button>
+    <button class="small" id="pNew">🎲 Nueva partida aleatoria</button>
+    <button class="small" id="pClose" style="margin-left:auto">✔ Cerrar</button>
+  </div>
+  <small>Los cambios de vocabulario se aplican al reiniciar o empezar una nueva partida.</small>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+/* =====================================================================
+   1) VOCABULARIO INICIAL  ← AQUÍ SE DEFINEN LAS IMÁGENES
+   Cada habitación tiene: name (palabra en inglés), img (ruta de la imagen)
+   y emoji (dibujo de reserva si falta la imagen).
+   Para cambiar una imagen, edita la ruta en "img". Las imágenes van en la
+   carpeta "images" junto a este index.html.
+   (Desde el Panel de la maestra también puedes elegir imágenes locales.)
+   ===================================================================== */
+const DEFAULT_ROOMS = [
+  { id:'kitchen',  name:'KITCHEN',     img:'kitchen.PNG',     emoji:'🍳', on:true },
+  { id:'bedroom',  name:'BEDROOM',     img:'bedroom.PNG',     emoji:'🛏️', on:true },
+  { id:'bathroom', name:'BATHROOM',    img:'bath.PNG',    emoji:'🛁', on:true },
+  { id:'living',   name:'LIVING ROOM', img:'living.PNG', emoji:'🛋️', on:true },
+  { id:'dining',   name:'DINING ROOM', img:'dining.PNG', emoji:'🍽️', on:true },
+  { id:'garden',   name:'GARDEN',      img:'garden.PNG',      emoji:'🌷', on:true },
+  { id:'garage',   name:'GARAGE',      img:'garage.PNG',      emoji:'🚗', on:true },
+  { id:'laundry',  name:'LAUNDRY ROOM',img:'laudry.PNG',     emoji:'🧺', on:true },
+  { id:'study',    name:'STUDY',       img:'study.PNG',       emoji:'🪜', on:true }
+];
+const COLORS = [['#ff4d4d','#c42b2b'],['#3d8bff','#2257c4'],['#ffd23d','#d99d00'],['#3cc46b','#238a47'],['#9a5cff','#6633c4'],['#ff7ac0','#d14a93'],['#ff9a3d','#c76a10'],['#2ec9c9','#1a8f8f'],['#a3d63d','#6f9a14']];
+const OK_MSG=['GREAT JOB!','EXCELLENT!','YOU FOUND IT!','AMAZING MEMORY!'];
+const BAD_MSG=['OOPS! TRY AGAIN!','NOT THIS ONE!','YOU CAN DO IT!'];
+
+/* ===== 2) CONFIGURACIÓN (se guarda en localStorage) ===== */
+const LS='mysteryBoxesV2';
+let cfg={rooms:JSON.parse(JSON.stringify(DEFAULT_ROOMS)),boxes:6,observe:5,sound:true,speak:true};
+try{const s=JSON.parse(localStorage.getItem(LS)||'null'); if(s&&s.rooms&&s.rooms.length)cfg=Object.assign(cfg,s);}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(cfg));}catch(e){toast('No se pudo guardar (imagen muy pesada o navegador sin permiso).');}}
+
+/* ===== 3) UTILIDADES ===== */
+const $=id=>document.getElementById(id);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3500);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));}
+
+/* ===== 4) SONIDO (Web Audio) Y VOZ (speechSynthesis) ===== */
+let AC=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,type='sine',delay=0,vol=.15,slide=0){
+  if(!cfg.sound)return;const a=ac();if(!a)return;const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(f*slide,t+d);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.05);}
+const SFX={
+  open:()=>tone(200,.3,'triangle',0,.2,2.2), close:()=>tone(400,.22,'triangle',0,.2,.5),
+  magic:()=>[784,988,1175,1568].forEach((f,i)=>tone(f,.35,'sine',i*.09,.12)),
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,'square',i*.1,.08)),
+  bad:()=>tone(330,.35,'sine',0,.12,.7),
+  win:()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.3,'square',i*.14,.08))};
+function speak(t,force){
+  if(!cfg.sound||!('speechSynthesis' in window)||(!cfg.speak&&!force))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),vs=speechSynthesis.getVoices();u.lang='en-US';u.rate=.85;
+    const v=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+const phrase=r=>'This is the '+r.name.toLowerCase()+'.';
+
+/* ===== 5) EFECTOS VISUALES ===== */
+function stars(el,n=14){const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<n;i++){const s=document.createElement('span');s.className='star';s.textContent=['⭐','✨','🌟'][i%3];
+    s.style.left=cx+'px';s.style.top=cy+'px';s.style.setProperty('--x',(Math.random()*300-150)+'px');s.style.setProperty('--y',(Math.random()*300-200)+'px');
+    document.body.appendChild(s);setTimeout(()=>s.remove(),1400);}}
+function confetti(n=90){for(let i=0;i<n;i++){const c=document.createElement('i');c.className='conf';
+  c.style.left=Math.random()*100+'vw';c.style.background=COLORS[i%6][0];c.style.animationDuration=(2+Math.random()*2.5)+'s';c.style.animationDelay=Math.random()+'s';
+  document.body.appendChild(c);setTimeout(()=>c.remove(),5500);}}
+function say(t,cls){const m=$('msg');m.textContent=t;m.classList.remove('pop');void m.offsetWidth;if(t)m.classList.add('pop');}
+
+/* ===== 6) ESTADO DEL JUEGO ===== */
+let level=3;            // nivel actual = número de cajas (3 a 9)
+let boxes=[];          // [{el, room, color}]  cada caja guarda SU habitación
+let chosen=[];         // habitaciones de la partida actual
+let phase='home', locked=false, seen=new Set(), queue=[], current=null, answered=false, score=0, found=0, foundList=[];
+
+function imgNode(r){ // imagen con respaldo si falta el archivo
+  const wrap=document.createElement('div');wrap.style.cssText='width:100%;height:100%';
+  const fb=()=>{wrap.innerHTML='<div class="missing">'+(r.emoji||'🏠')+'<small>Missing image: '+(r.img||'(none)')+'</small></div>';};
+  if(!r.img){fb();return wrap;}
+  const im=new Image();im.alt=r.name;im.onerror=fb;im.src=r.img;wrap.appendChild(im);return wrap;}
+
+function startGame(keep){
+  const active=cfg.rooms.filter(r=>r.on&&r.name.trim());
+  if(active.length<2){toast('Selecciona al menos 2 habitaciones en el panel de la maestra.');return;}
+  let n=Math.min(level,active.length,9);
+  if(n<level)toast('Solo hay '+active.length+' habitaciones activas: se usarán '+n+' cajas.');
+  if(!keep||chosen.length!==n)chosen=shuffle(active).slice(0,n);
+  chosen=shuffle(chosen); // nueva distribución en las cajas
+  score=0;found=0;foundList=[];seen=new Set();queue=[];current=null;answered=false;locked=false;phase='observe';
+  const g=$('grid');g.innerHTML='';g.style.setProperty('--cols',n===4?2:(n===7||n===8?4:3));
+  boxes=chosen.map((room,i)=>{ // caja i guarda la habitación i
+    const color=COLORS[i%COLORS.length];
+    const el=document.createElement('button');el.className='box';el.setAttribute('aria-label','Mystery box '+(i+1));
+    el.innerHTML='<div class="bx" style="--i:'+i+';--c:'+color[0]+';--c2:'+color[1]+'"><div class="room"></div><div class="body"></div><div class="lid"></div></div>';
+    const rm=el.querySelector('.room');rm.appendChild(imgNode(room));const lab=document.createElement('div');lab.className='lab';lab.textContent=room.name;rm.appendChild(lab);
+    const b={el,room,i};el.onclick=()=>onBox(b);g.appendChild(el);return b;});
+  $('q').textContent='LOOK CAREFULLY!';say('Click a box to open it!');
+  $('obs').style.display='flex';$('ready').style.display='none';$('nextBtn').style.display='none';
+  stats();show('game');
+}
+function stats(){$('sLevel').textContent=chosen.length;$('sScore').textContent=score;$('sFound').textContent=found;
+  $('sLeft').textContent=phase==='ask'?queue.length+(current&&!answered?1:0):chosen.length;}
+
+function openBox(b){b.el.classList.add('open');SFX.open();setTimeout(SFX.magic,250);stars(b.el,6);}
+function closeBox(b){if(b.el.classList.contains('open')){b.el.classList.remove('open');SFX.close();}}
+
+function onBox(b){
+  ac();if(locked||b.el.classList.contains('open'))return;
+  if(phase==='observe')observeBox(b);else if(phase==='ask')askBox(b);
+}
+async function observeBox(b){
+  locked=true;openBox(b);say(b.room.name+'!');speak(b.room.name,true);setTimeout(()=>speak(phrase(b.room)),900);
+  await wait(cfg.observe*1000);closeBox(b);say('');seen.add(b.i);locked=false;checkReady();
+}
+async function showAll(){
+  if(phase!=='observe'||locked)return;locked=true;say('LOOK CAREFULLY!');
+  for(const b of boxes){openBox(b);await wait(180);}
+  await wait(cfg.observe*1000);boxes.forEach(b=>{closeBox(b);seen.add(b.i);});locked=false;say('');checkReady();
+}
+function checkReady(){if(seen.size>=boxes.length){$('ready').style.display='block';}}
+
+/* ===== 7) FASE DE MEMORIA ===== */
+async function startAsk(){
+  if(locked)return;locked=true;phase='ask';$('ready').style.display='none';$('obs').style.display='none';
+  boxes.forEach(b=>b.el.classList.remove('open'));$('q').textContent='SHUFFLING...';say('');
+  await wait(600);
+  for(let r=0;r<3;r++){ // animación de intercambio (FLIP): cambia la posición visual, no la habitación de cada caja
+    const els=boxes.map(b=>b.el),first=els.map(e=>e.getBoundingClientRect());
+    shuffle(els).forEach(e=>$('grid').appendChild(e));
+    els.forEach((e,i)=>{const l=e.getBoundingClientRect();e.style.transition='none';e.style.transform='translate('+(first[i].left-l.left)+'px,'+(first[i].top-l.top)+'px)';});
+    void $('grid').offsetWidth;
+    els.forEach(e=>{e.style.transition='transform .6s cubic-bezier(.5,0,.3,1)';e.style.transform='';});
+    SFX.close();await wait(700);
+  }
+  boxes.forEach(b=>b.el.style.transition='');
+  queue=shuffle(chosen);locked=false;nextQ();
+}
+function nextQ(){
+  if(!queue.length){return win();}
+  current=queue.pop();answered=false;locked=false;
+  boxes.forEach(b=>b.el.classList.remove('open','party'));
+  $('nextBtn').style.display='none';say('');
+  $('q').innerHTML='WHERE IS THE <b>'+current.name+'</b>? <button class="spk" aria-label="Listen">🔊</button>';
+  $('q').querySelector('.spk').onclick=()=>speak(current.name,true);
+  speak('Where is the '+current.name.toLowerCase()+'?');stats();
+}
+async function askBox(b){
+  if(answered)return;locked=true;openBox(b);
+  if(b.room===current){
+    answered=true;score+=10;found++;foundList.push(current.name);SFX.ok();stars(b.el,18);b.el.classList.add('party');
+    say(OK_MSG[Math.random()*OK_MSG.length|0]);speak(phrase(current));stats();
+    $('nextBtn').style.display='inline-block';locked=false; // la caja correcta queda abierta
+  }else{
+    b.el.classList.add('shake');SFX.bad();say(BAD_MSG[Math.random()*BAD_MSG.length|0]);speak(b.room.name);
+    await wait(1700);b.el.classList.remove('shake');closeBox(b);say('');locked=false;
+  }
+}
+function win(){
+  phase='win';$('wScore').textContent=score;$('sum').innerHTML=foundList.map(n=>'<span>⭐ '+n+'</span>').join('');
+  const top=Math.min(9,cfg.rooms.filter(r=>r.on&&r.name.trim()).length);
+  $('nextLvlBtn').style.display=level<top?'inline-block':'none';
+  $('wLevel').textContent=level<top?'Level '+level+' complete!':'🏆 ALL LEVELS COMPLETE! 🏆';
+  show('win');SFX.win();confetti();speak('You did it!');
+}
+
+/* ===== 8) BOTONES PRINCIPALES ===== */
+$('playBtn').onclick=()=>{ac();level=3;startGame(false);};
+$('showAll').onclick=showAll;
+$('readyBtn').onclick=startAsk;
+$('nextBtn').onclick=()=>{if(!locked||answered){locked=false;nextQ();}};
+$('againBtn').onclick=()=>startGame(false);
+$('nextLvlBtn').onclick=()=>{level++;startGame(false);};
+$('backBtn').onclick=()=>{phase='home';show('home');};
+$('homeBtn').onclick=()=>{phase='home';locked=false;show('home');};
+$('soundBtn').onclick=()=>{cfg.sound=!cfg.sound;if(!cfg.sound&&window.speechSynthesis)speechSynthesis.cancel();sndIcon();save();};
+function sndIcon(){$('soundBtn').textContent=cfg.sound?'🔊':'🔇';}
+
+/* ===== 9) PANEL DE LA MAESTRA ===== */
+const panel=$('panel');
+function openPanel(){renderRooms();$('oBoxes').innerHTML=[3,4,5,6,7,8,9].map(n=>'<option>'+n+'</option>').join('');
+  $('oBoxes').value=level;$('oObs').value=cfg.observe;$('oSound').checked=cfg.sound;$('oSpeak').checked=cfg.speak;panel.showModal();}
+$('teacherBtn').onclick=$('teacherHome').onclick=openPanel;
+$('pClose').onclick=()=>{panel.close();save();};
+$('oBoxes').onchange=e=>{level=+e.target.value;};
+$('oObs').onchange=e=>{cfg.observe=+e.target.value;save();};
+$('oSound').onchange=e=>{cfg.sound=e.target.checked;sndIcon();save();};
+$('oSpeak').onchange=e=>{cfg.speak=e.target.checked;save();};
+$('pRestart').onclick=()=>{panel.close();save();startGame(true);};
+$('pNew').onclick=()=>{panel.close();save();startGame(false);};
+$('addRoom').onclick=()=>{cfg.rooms.push({id:'r'+Date.now(),name:'NEW ROOM',img:'',emoji:'🏠',on:true});save();renderRooms();};
+function renderRooms(){
+  const box=$('rooms');box.innerHTML='';
+  cfg.rooms.forEach((r,i)=>{
+    const row=document.createElement('div');row.className='row';
+    row.innerHTML='<input type="checkbox" aria-label="Usar" '+(r.on?'checked':'')+'><input type="text" value="" aria-label="Nombre en inglés"><img alt="" src="'+(r.img||'')+'"><input type="file" accept="image/*" aria-label="Imagen"><button class="small" aria-label="Eliminar">🗑</button>';
+    const [cb,txt,im,file,del]=row.children;txt.value=r.name;
+    cb.onchange=()=>{r.on=cb.checked;save();};
+    txt.onchange=()=>{r.name=txt.value.toUpperCase().trim();save();};
+    im.onerror=()=>{im.style.visibility='hidden';};
+    file.onchange=()=>{const f=file.files[0];if(!f)return;const fr=new FileReader();
+      fr.onload=()=>{const t=new Image();t.onload=()=>{const s=Math.min(1,640/Math.max(t.width,t.height)),c=document.createElement('canvas');
+        c.width=t.width*s;c.height=t.height*s;c.getContext('2d').drawImage(t,0,0,c.width,c.height);r.img=c.toDataURL('image/jpeg',.82);save();renderRooms();};t.src=fr.result;};fr.readAsDataURL(f);};
+    del.onclick=()=>{if(cfg.rooms.length<=2){toast('Debe quedar al menos 2 habitaciones.');return;}cfg.rooms.splice(i,1);save();renderRooms();};
+    box.appendChild(row);});
+}
+sndIcon();
+if('speechSynthesis' in window)speechSynthesis.getVoices();
+</script>
+</body>
+</html>
